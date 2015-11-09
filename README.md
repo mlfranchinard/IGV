@@ -8,3 +8,6 @@ The number of jumps achievable and therefore the number of simultaneously observ
 This  IGV version was deployed in a virtual machine of the IFB cloud (http://france-bioinformatique.fr) to benefit from the high RAM resources required by the application. 
 
 With this new feature, users can now compare different genotypes with the reference genome and navigate between them synchronously while keeping the IGV performance.
+
+References
+[1] Helga Thorvaldsdóttir, James T. Robinson, Jill P. Mesirov. Integrative Genomics Viewer (IGV): high-performance genomics data visualization and exploration. Briefings in Bioinformatics 14, 178-192 (2013).
