@@ -72,11 +72,26 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.List;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.broad.igv.DirectoryManager;
 import org.broad.igv.agv.AGV;
-import org.broad.igv.ui.action.AddLinksMenuAction;
+import org.broad.igv.ui.action.CreateLinkMenuAction;
 import org.broad.igv.util.BrowserLauncher;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 /**
  * @author jrobinso
@@ -198,7 +213,8 @@ public class TrackMenuUtils {
         
         ///add "customize external links" item
         menu.addSeparator();
-        menu.add(addLinkMenu());
+        menu.add(createLinkItem(tracks, te));
+        menu.add(userLinksMenu(tracks,te));
   
     }
     
@@ -483,7 +499,7 @@ public class TrackMenuUtils {
                 //view other genomes, Aout 2015
                 //Com redmine: View other genotype menu (TrackMenuUtils.java)
                 if (te.getFrame().id==0){
-                    addAGVItems(f, featurePopupMenu, te, t);
+                    addAGVItems(f, featurePopupMenu, te);
                 }
 
             }
@@ -506,7 +522,7 @@ public class TrackMenuUtils {
 //View other genotypes items///////////////////////////////////////////////////////////////////////////////////////////////////////////
 //mlfranchinard, aout 2015
 
-    public static void addAGVItems(Feature f, JPopupMenu featurePopupMenu, TrackClickEvent te, Track t){
+    public static void addAGVItems(Feature f, JPopupMenu featurePopupMenu, TrackClickEvent te){
         
         featurePopupMenu.addSeparator();
         String identifier = ((IGVFeature)f).getValueString(te.getChromosomePosition(), null);
@@ -600,44 +616,251 @@ public class TrackMenuUtils {
     }
    
     //link item/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //November 20, 2015
     //Com redmine: addLinkMenu, TrackMenuUtils.java
-    public static JMenu addLinkMenu(){
-        String prefLinks = PreferenceManager.getInstance().getExternalLinks();
-        final String[] links = prefLinks!=""?prefLinks.split(";"):null;
-        JMenu menu = new JMenu("Add external links");
-        
-        JMenuItem item = new JMenuItem("Open external links manager");
-        item.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    AddLinksMenuAction manager = new AddLinksMenuAction(links);
-                    manager.setVisible(true);
-                }
-        });
-        menu.add(item);
-        
-        if(links!=null){
-            for(String nlink: links){
-                String name = nlink.split(": ")[0];
-                final String link = nlink.replace(name+": ","");
-                JMenuItem litem = new JMenuItem(name);
-                litem.setToolTipText("go to "+link);
-
-                litem.addActionListener(new ActionListener() {
-                        public void actionPerformed(ActionEvent e) {
-                            try {
-                                BrowserLauncher.openURL(link);
-                            } catch (IOException ex) {
-                                JOptionPane.showMessageDialog(IGV.getMainFrame(), ex, "Error opening link", JOptionPane.ERROR_MESSAGE);
-                                log.error("Error opening link", ex);
-                            }
-                        }
-                });
-                menu.add(litem);
-            }
+    
+    public static HashMap<String,ArrayList<String>> links = new HashMap<String,ArrayList<String>>();
+    
+    public static void getUserLinks(){
+        File ulinksfile = new File(DirectoryManager.getIgvDirectory(), "userlinks.xml");
+        if (ulinksfile.exists()){
+            readXMLLinksFile(ulinksfile);
         }
-        return menu;
     }
     
+    public static void setUserLinks(){
+        File ulinksfile = new File(DirectoryManager.getIgvDirectory(), "userlinks.xml");
+        if (!links.isEmpty()){
+            if (!ulinksfile.exists()){
+                try {
+                    ulinksfile.createNewFile();
+                } catch (IOException e) {
+                    log.error("Could not create user links file: " + ulinksfile, e);
+                }
+            }
+            createXMLLinksFile(ulinksfile);
+        }
+    }
+    
+    public static void createXMLLinksFile(File xmlLinksFile){
+        
+        final DocumentBuilderFactory factory  = DocumentBuilderFactory.newInstance();
+        try{
+            final DocumentBuilder builder = factory.newDocumentBuilder();
+            final Document document = builder.newDocument();
+            
+            final Element racine = document.createElement("userlinks");
+            document.appendChild(racine);
+            
+            for(String name: links.keySet()){
+                
+                final Element link = document.createElement("link");
+                link.setAttribute("name", name);
+                racine.appendChild(link);
+                
+                ArrayList<String> vlink = links.get(name);
+                
+                final Element linkkeys = document.createElement("keys");
+                linkkeys.appendChild(document.createTextNode(vlink.get(0)));
+                link.appendChild(linkkeys);
+                
+                final Element url = document.createElement("url");
+                url.appendChild(document.createTextNode(vlink.get(1)));
+                link.appendChild(url);
+                
+            }
+            
+            final TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            final Transformer transformer = transformerFactory.newTransformer();
+            final DOMSource source = new DOMSource(document);
+            final StreamResult sortie = new StreamResult(xmlLinksFile);
+            
+            transformer.setOutputProperty(OutputKeys.VERSION, "1.0");
+            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+            transformer.setOutputProperty(OutputKeys.STANDALONE, "yes");
+            
+            
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+            
+            transformer.transform(source, sortie);
+                    
+                    
+        }catch (final ParserConfigurationException e){
+            e.printStackTrace();
+        }catch (final TransformerConfigurationException e){
+            e.printStackTrace();
+        }catch (final TransformerException e){
+            e.printStackTrace();
+        }
+        
+    }
+    
+    
+    public static void readXMLLinksFile(File xmlLinksFile){
+        
+        final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        try{
+            final DocumentBuilder builder = factory.newDocumentBuilder();
+            final Document document = builder.parse(xmlLinksFile);
+            
+            final Element racine = document.getDocumentElement();
+            final NodeList racineNoeuds = racine.getChildNodes();
+            final int nbRacineNoeuds = racineNoeuds.getLength();
+            
+            for(int i=0; i<nbRacineNoeuds; i++){
+                if(racineNoeuds.item(i).getNodeType()==Node.ELEMENT_NODE){
+                    final Element link = (Element) racineNoeuds.item(i);
+                    
+                    final Element linkkeys = (Element) link.getElementsByTagName("keys").item(0);
+                    String keys = linkkeys.getTextContent();
+                    
+                    final Element urllink = (Element) link.getElementsByTagName("url").item(0);
+                    String url = urllink.getTextContent();
+                    
+                    ArrayList<String> vlink = new ArrayList<String>();
+                    vlink.add(keys);
+                    vlink.add(url);
+                    links.put(link.getAttribute("name"), vlink);
+                }
+            }
+        }catch (final ParserConfigurationException e){
+            e.printStackTrace();
+        }catch (final SAXException e){
+            e.printStackTrace();
+        }catch (final IOException e){
+            e.printStackTrace();
+        }
+    }
+    
+    public static JMenuItem createLinkItem(final Collection<Track> tracks, final TrackClickEvent evt){
+        
+        JMenuItem item = new JMenuItem("Add a link");
+        final String details = getDetails(tracks,evt);
+        
+        if (details!=null){
+            item.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    CreateLinkMenuAction lmenu = new CreateLinkMenuAction(details);
+                }
+            });
+        }
+        else{
+            item.setEnabled(false);
+        }
+        
+        return item;
+    }
+    
+    public static String getDetails(final Track t, final TrackClickEvent evt){
+        Feature f = t.getFeatureAtMousePosition(evt);
+        if (f != null) {
+            ReferenceFrame frame = evt.getFrame();
+            int mouseX = evt.getMouseEvent().getX();
+
+            double location = frame.getChromosomePosition(mouseX);
+            if (f instanceof IGVFeature) {
+                return ((IGVFeature) f).getValueString(location, null);
+            }
+        }
+        return null;
+    }
+    
+    
+    public static String getDetails(final Collection<Track> tracks, final TrackClickEvent evt){
+        
+        Track t = tracks.iterator().next();
+        String source = "";
+        if (t.getResourceLocator()!=null){
+            source = t.getResourceLocator().getPath();
+        }else{
+            source = IGV.getInstance().getGenomeManager().geneFile;
+        }
+        if (source!=""){
+            source = "<b>$source</b>: "+source;
+        }
+        
+        String details = getDetails(t,evt);
+        if (details ==null || !details.startsWith("<b>")){return null;}
+        
+        String head = details.split("<br><br>")[0];
+        String tail = details.split("<br><br>")[1];
+
+        String[] hlist = head.split("<br>");
+        head = head.replace(hlist[0], "<b>$name</b>: "+hlist[0].split("<b>")[1].replace("</b>", ""));
+        head = head.replace(hlist[1], "<b>$position</b>: "+hlist[1]);
+        head = head.replace(hlist[2], "<b>$type</b>: "+hlist[2].split(" = ")[1]);
+
+        tail = tail.replace("<br/><b>","<br><b>").replace("<b>","<b>$");
+
+        details = source+"<br>"+head+"<br>"+tail;
+        
+        return details;
+    }
+    
+    public static HashMap<String,String> getDetailsMap(String details){
+        
+        if (details==null) return null;
+        
+        HashMap<String,String> dmap = new HashMap<String,String>();
+        for(String d : details.split("<br>")){
+            String k = d.split("</b>:")[0].replace("<b>", "");
+            String v = d.split("</b>:")[1].replace(" ", "").toLowerCase();
+            dmap.put(k, v);
+        }
+        return dmap;
+    }
+    
+    public static JMenu userLinksMenu(final Collection<Track> tracks, final TrackClickEvent evt){
+        
+        JMenu menu = new JMenu("User links");
+        HashMap<String,String> dmap = getDetailsMap(getDetails(tracks,evt));
+        getUserLinks();
+        
+        if (links.isEmpty() || dmap==null || dmap.isEmpty()){
+            menu.setEnabled(false);
+            return menu;
+        }
+        
+        JMenuItem item = new JMenuItem("");
+        for(String name: links.keySet()){
+            String keys = links.get(name).get(0);
+            String link = links.get(name).get(1);
+            for(String k: keys.split(";")){
+                if (dmap.containsKey(k)){
+                    link = link.replace(k, dmap.get(k));
+                }
+                else{
+                    link=null;
+                    break;
+                }
+            }
+            
+            if (link!=null){
+                item = new JMenuItem(name);
+                item.setToolTipText("go to "+link);
+                final String l = link;
+                item.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            BrowserLauncher.openURL(l);
+                        } catch (IOException ex) {
+                            JOptionPane.showMessageDialog(IGV.getMainFrame(), ex, "Error opening link", JOptionPane.ERROR_MESSAGE);
+                            log.error("Error opening link", ex);
+                        }
+                    }
+                });
+                menu.add(item);
+            }
+            else{
+                menu.setEnabled(false);
+            }
+            
+        }
+        
+        return menu;
+    }
+  
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
     private static JMenuItem getFeatureToGeneListItem(final Track t) {
