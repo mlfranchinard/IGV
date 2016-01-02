@@ -15,4 +15,4 @@ References:
 [1] Helga Thorvaldsdóttir, James T. Robinson, Jill P. Mesirov. Integrative Genomics Viewer (IGV): high-performance genomics data visualization and exploration. Briefings in Bioinformatics 14, 178-192 (2013).
 
 # Poster
-<A HREF="http://migale.jouy.inra.fr/sites/migale.jouy.inra.fr.drupal7.migale.jouy.inra.fr/files/poster_jobim_v5.pdf">View and synchronize several genotypes using IGV</A>
+<A HREF="http://migale.jouy.inra.fr/sites/migale.jouy.inra.fr.drupal7.migale.jouy.inra.fr/files/poster_jobim_v5.pdf"><IMG SRC="http://migale.jouy.inra.fr/sites/migale.jouy.inra.fr.drupal7.migale.jouy.inra.fr/files/poster_jobim_v5.pdf"></A>
