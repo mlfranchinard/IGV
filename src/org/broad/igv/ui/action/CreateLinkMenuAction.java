@@ -11,6 +11,7 @@ import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.HashMap;
 import javax.swing.JLabel;
+import org.apache.commons.lang.StringUtils;
 import org.broad.igv.track.TrackMenuUtils;
 import org.broad.igv.ui.IGV;
 
@@ -201,7 +202,7 @@ public class CreateLinkMenuAction extends javax.swing.JDialog {
 
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
         // TODO add your handling code here:
-        String lname = linkNameTextField.getText();
+       /* String lname = linkNameTextField.getText();
         String url = URLTextField.getText();
         
         if (lname!="" && url!=""){
@@ -216,11 +217,11 @@ public class CreateLinkMenuAction extends javax.swing.JDialog {
             };
             
             ArrayList<String> link = new ArrayList<String>();
-            link.add(String.join(";", keys));
+            link.add(StringUtils.join(link, ";"));
             link.add(url);
             TrackMenuUtils.links.put(lname, link);
         }
-        dispose();
+        dispose();*/
     }//GEN-LAST:event_saveButtonActionPerformed
 
     /**

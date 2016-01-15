@@ -89,11 +89,14 @@ public class RegionOfInterestPanel extends JPanel {
             return;
         }
 
-
+        
         for (RegionOfInterest regionOfInterest : regions) {
 
             int regionStart = regionOfInterest.getStart();
             int regionEnd = regionOfInterest.getEnd();
+            
+            //jan 2016
+            String regionDescription = regionOfInterest.getDescription();
 
             // This is ugly, but neccessary the way the "whole genome" is treated as another chromosome
             if (frame.getChrName().equals(Globals.CHR_ALL)) {
@@ -108,7 +111,21 @@ public class RegionOfInterestPanel extends JPanel {
 
             g.setColor(regionOfInterest.getBackgroundColor());
             g.fillRect(start, 0, regionWidth, height);
-
+            
+            //paint description
+            if (regionDescription!=null){
+                g.setColor(Color.BLACK);
+                FontMetrics fm = g.getFontMetrics();
+                int dwith = fm.stringWidth(regionDescription);
+               
+                while (dwith>regionWidth){
+                    regionDescription = regionDescription.substring(0, regionDescription.length()-1);
+                    dwith = fm.stringWidth(regionDescription);
+                }
+                
+                int x = start + Math.max(0,(regionWidth - dwith)/2);
+                g.drawString(regionDescription,x,height);
+            }
         }
     }
 
@@ -165,6 +182,8 @@ public class RegionOfInterestPanel extends JPanel {
                 String desc = JOptionPane.showInputDialog(parent, "Add or edit region description:", roi.getDescription());
                 roi.setDescription(desc);
                 IGV.getInstance().getSession().getRegionsOfInterestObservable().setChangedAndNotify();
+                //paint description, jan 2016
+                parent.repaint();
 
             }
         });

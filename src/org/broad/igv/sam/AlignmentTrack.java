@@ -1327,8 +1327,8 @@ public class AlignmentTrack extends AbstractTrack implements AlignmentTrackEvent
             //mlfranchinard, sept 2015
             //add links item
             addSeparator();
-            add(TrackMenuUtils.createLinkItem(tracks, e));
-            add(TrackMenuUtils.userLinksMenu(tracks,e));
+            /*add(TrackMenuUtils.createLinkItem(tracks, e));
+            add(TrackMenuUtils.userLinksMenu(tracks,e));*/
         }
 
         /**

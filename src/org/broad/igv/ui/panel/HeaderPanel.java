@@ -197,7 +197,7 @@ public class HeaderPanel extends JPanel implements Transferable {
 
             regionOfInterestPane = new RegionOfInterestPanel(frame);
             regionOfInterestPane.setBackground(new java.awt.Color(255, 255, 255));
-            regionOfInterestPane.setMinimumSize(new java.awt.Dimension(0, 13));
+            regionOfInterestPane.setMinimumSize(new java.awt.Dimension(0, 16)); // to show description (initial value =13), jan 2016
 
 
             panel.add(regionOfInterestPane, java.awt.BorderLayout.SOUTH);

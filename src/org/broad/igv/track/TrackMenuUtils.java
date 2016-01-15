@@ -213,8 +213,8 @@ public class TrackMenuUtils {
         
         ///add "customize external links" item
         menu.addSeparator();
-        menu.add(createLinkItem(tracks, te));
-        menu.add(userLinksMenu(tracks,te));
+        //menu.add(createLinkItem(tracks, te));
+        //menu.add(userLinksMenu(tracks,te));
   
     }
     
@@ -619,7 +619,7 @@ public class TrackMenuUtils {
     //November 20, 2015
     //Com redmine: addLinkMenu, TrackMenuUtils.java
     
-    public static HashMap<String,ArrayList<String>> links = new HashMap<String,ArrayList<String>>();
+    /*public static HashMap<String,ArrayList<String>> links = new HashMap<String,ArrayList<String>>();
     
     public static void getUserLinks(){
         File ulinksfile = new File(DirectoryManager.getIgvDirectory(), "userlinks.xml");
@@ -766,7 +766,7 @@ public class TrackMenuUtils {
         return null;
     }
     
-    
+    ////too bad!!!!!!!!!!!!
     public static String getDetails(final Collection<Track> tracks, final TrackClickEvent evt){
         
         Track t = tracks.iterator().next();
@@ -783,18 +783,27 @@ public class TrackMenuUtils {
         String details = getDetails(t,evt);
         if (details ==null || !details.startsWith("<b>")){return null;}
         
-        String head = details.split("<br><br>")[0];
-        String tail = details.split("<br><br>")[1];
+        if (details.contains("<br><br>")){
+            
+            String[] dlist = details.split("<br><br>");
+            if (dlist.length>0){
+                String head = dlist[0];
 
-        String[] hlist = head.split("<br>");
-        head = head.replace(hlist[0], "<b>$name</b>: "+hlist[0].split("<b>")[1].replace("</b>", ""));
-        head = head.replace(hlist[1], "<b>$position</b>: "+hlist[1]);
-        head = head.replace(hlist[2], "<b>$type</b>: "+hlist[2].split(" = ")[1]);
+                String[] hlist = head.split("<br>");
+                head = head.replace(hlist[0], "<b>$name</b>: "+hlist[0].split("<b>")[1].replace("</b>", ""));
+                head = head.replace(hlist[1], "<b>$position</b>: "+hlist[1]);
+                head = head.replace(hlist[2], "<b>$type</b>: "+hlist[2].split(" = ")[1]);
+            
+                String tail = "";
+                if (dlist.length>1){
+                    tail = details.split("<br><br>")[1];
+                    tail = tail.replace("<br/><b>","<br><b>").replace("<b>","<b>$");
+                }
+                
+                details = source+"<br>"+head+"<br>"+tail;
+            }
 
-        tail = tail.replace("<br/><b>","<br><b>").replace("<b>","<b>$");
-
-        details = source+"<br>"+head+"<br>"+tail;
-        
+        }
         return details;
     }
     
@@ -804,9 +813,11 @@ public class TrackMenuUtils {
         
         HashMap<String,String> dmap = new HashMap<String,String>();
         for(String d : details.split("<br>")){
-            String k = d.split("</b>:")[0].replace("<b>", "");
-            String v = d.split("</b>:")[1].replace(" ", "").toLowerCase();
-            dmap.put(k, v);
+            if (d.contains("</b>:")){
+                String k = d.split("</b>:")[0].replace("<b>", "");
+                String v = d.split("</b>:")[1].replace(" ", "").toLowerCase();
+                dmap.put(k, v);
+            }
         }
         return dmap;
     }
@@ -859,7 +870,7 @@ public class TrackMenuUtils {
         }
         
         return menu;
-    }
+    }*/
   
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     

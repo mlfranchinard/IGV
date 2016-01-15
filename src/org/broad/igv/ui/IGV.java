@@ -352,7 +352,7 @@ public class IGV {
 
             private void windowCloseEvent() {
                 PreferenceManager.getInstance().setApplicationFrameBounds(mainFrame.getBounds());
-                TrackMenuUtils.setUserLinks();
+                //TrackMenuUtils.setUserLinks();
             }
 
             @Override
